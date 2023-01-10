@@ -1,0 +1,172 @@
+PROJECT (
+	PREAMBLE (
+		NAME "Dashnode"
+		AUTHOR "Lawrence Williams"
+		VERSION 1.3
+		DESCRIPTION "Single DASH node"
+		 )
+	PARAMLIB (
+
+-- Revised Feb 2003 by Roland Ibbett
+
+-- Struct definition for simple data packet and its associated link param
+
+		STRUCT (p1_struct, [RINT (p1_address, 0), 
+                                     RSTRING (p1_rw, "-"),
+                                     RSTRING (p1_id, "-")]);
+                LINK   (p1_link, [(DATAPKT, RSTRUCT(p1_struct, DP))]);
+
+-- Struct for holding memory traces
+
+		STRUCT (mem_trace_struct, [RINT (mt_address,0),
+                                            RSTRING (mt_rw, "__"),
+                                            RSTRING (mt_id, "__")]);
+
+-- Struct for holding cache line information
+
+		STRUCT (ca_line_struct, [RINT (ca_valid,0),
+					  RINT (ca_mod,0),
+					  RINT (ca_share,0),
+					  RINT (ca_tag,0),
+					  RINT (ca_cm_block,0),
+					  RINT (ca_add1,0),
+					  RINT (ca_add2,0),
+					  RINT (ca_add3,0),
+					  RINT (ca_add4,0)]);
+
+-- definition of error & parameters description word array
+	ARRAY (string_array, String);
+
+-- definition of parameter value array
+	ARRAY (parameter_value_array, int);
+-- Define the State enumerations for mips and caches.
+
+
+-- Define storage arrays for cache contents and memory trace storage
+
+		ARRAY (cache_memory, ca_line_struct);
+		ARRAY (memory_trace, mem_trace_struct);
+
+	)
+	GLOBALS (
+	)
+	ENTITYLIB (
+
+		ENTITY Timer (
+			DESCRIPTION("Cycle counter")
+			STATES (NORMAL)
+			PARAMS (
+				static RRANGE (Max_cycles, 1, 20, 7)
+			 	RINT (Cycles, 0);
+			)
+			PORTS ()
+			ATTRIB ()
+		);
+		ENTITY mips (
+			DESCRIPTION ("Mips Address Generation Box.")
+			STATES (M_STOPPED, M_RUNNING, M_WAITING)
+		        PARAMS (
+			        RARRAY (memory_trace,mem_trace, 65536);
+                                RINT (TC,0);
+				static RRANGE (MIPS_delay, 2, 8, 2)
+                        )
+			PORTS  (
+			       	PORT (to_p_cache, p1_link, SOURCE);
+				PORT (from_p_cache, p1_link, DESTINATION);
+			)
+			ATTRIB ()	
+		);
+
+		ENTITY p_cache (
+			DESCRIPTION ("Primary Cache")
+			STATES (P_HIT, P_MISS, P_IDLE)
+			PARAMS (
+				RCHAR (status0, '_');
+				RCHAR (status1, '_');
+				RARRAY (cache_memory,cache, 256);
+				static RRANGE (P_delay, 1, 8, 1)
+				static RRANGE (P_size, 1, 8, 3)
+			)
+			PORTS  (
+				PORT (from_mips, p1_link, DESTINATION);
+				PORT (to_mips, p1_link, SOURCE);
+				PORT (to_s_cache, p1_link, SOURCE);
+				PORT (from_s_cache, p1_link, DESTINATION);
+			)
+			ATTRIB ()
+		);
+		ENTITY s_cache (
+			DESCRIPTION ("Secondary Cache")
+			STATES (S_HIT, S_MISS, S_IDLE)
+			PARAMS (
+				RCHAR (status0, '_');
+				RCHAR (status1, '_');
+				RARRAY (cache_memory,cache, 1024);
+				static RRANGE (S_delay, 1, 8, 2)
+				static RRANGE (S_size, 1, 10, 4)
+			)
+			PORTS  (
+				PORT (from_p_cache, p1_link, DESTINATION);
+				PORT (to_p_cache, p1_link, SOURCE);
+				PORT (to_mp_bus, p1_link, SOURCE);
+				PORT (from_mp_bus, p1_link, DESTINATION);
+			)
+			ATTRIB ()
+		);
+		ENTITY mp_bus (
+			DESCRIPTION ("Very Simple Bus!")
+			PARAMS ( )
+			PORTS  (
+				PORT (from_mips1, p1_link, DESTINATION);
+				PORT (to_mips1, p1_link, SOURCE);
+				PORT (to_c_memory, p1_link, SOURCE);
+				PORT (from_c_memory, p1_link, DESTINATION);
+			)
+			ATTRIB ()
+		);
+		ENTITY Memory (
+			DESCRIPTION ("Cluster Memory Unit")
+			PARAMS (
+				RCHAR (action, '_');
+				static RRANGE (M_delay, 1, 16, 4)
+				static RRANGE (M_size, 1, 16, 10)
+			)
+			PORTS  (
+				PORT (from_mp_bus, p1_link, DESTINATION);
+				PORT (to_mp_bus, p1_link, SOURCE);
+			)
+			ATTRIB ()
+		);
+        )
+	STRUCTURE (
+		AENTITY Timer TIMER (
+			DESCRIPTION ("Cycle counter")
+		);
+		AENTITY mips MIPS (
+			DESCRIPTION ("Processsor")
+		);
+		AENTITY p_cache P_CACHE  (
+			DESCRIPTION ("Primary Cache")
+		);
+		AENTITY s_cache S_CACHE  (
+			DESCRIPTION ("Secondary Cache")
+		);
+		AENTITY mp_bus MP_BUS (
+			DESCRIPTION ("Simple Bus")
+		);
+		AENTITY Memory MEMORY (
+			DESCRIPTION ("Cluster Memory")
+		);
+
+	CLINK (s_cache.S_CACHE[to_mp_bus]->mp_bus.MP_BUS[from_mips1],1);
+	CLINK (mips.MIPS[to_p_cache]->p_cache.P_CACHE[from_mips],1);
+	CLINK (p_cache.P_CACHE[to_mips]->mips.MIPS[from_p_cache],1);
+	CLINK (p_cache.P_CACHE[to_s_cache]->s_cache.S_CACHE[from_p_cache],1);
+	CLINK (s_cache.S_CACHE[to_p_cache]->p_cache.P_CACHE[from_s_cache],1);
+	CLINK (mp_bus.MP_BUS[to_mips1]->s_cache.S_CACHE[from_mp_bus],1);
+	CLINK (mp_bus.MP_BUS[to_c_memory]->Memory.MEMORY[from_mp_bus],1);
+	CLINK (Memory.MEMORY[to_mp_bus]->mp_bus.MP_BUS[from_c_memory],1);
+
+	)
+)
+

@@ -1,0 +1,52 @@
+//
+// Project:	DASH node
+// Entity:	Memory
+// File:	c_memory.hase
+// Date:	23 Oct 2001
+
+// Originally Written by Lawrence Williams  7/95
+// Modified by Roland Ibbett
+
+$class_decls
+
+//
+// Variable Declarations
+//
+
+p1_struct pkt_from_mp_bus;   // Packet inbound from mp_bus.
+p1_struct pkt_to_mp_bus;     // Packet bound for mp_bus.      
+
+$body 
+
+ action = '_';
+ dump_state();
+
+while(1)
+{
+	sim_get_next(ev);
+
+	SIM_CAST(p1_struct,pkt_from_mp_bus,ev);
+	if (pkt_from_mp_bus.p1_rw[0] == 'r')
+	 {action = 'R';}
+	else if (pkt_from_mp_bus.p1_rw[0] == 'w')
+	 {action = 'W';}
+	else if (pkt_from_mp_bus.p1_rw[0] == 'u')
+	 {action = 'U';}
+	dump_state();
+
+	sim_hold(M_delay);
+	action = '_';
+	dump_state();
+
+	// clause below only sends back write packets if allocating
+	// in 2nd cache level.
+
+	if (pkt_from_mp_bus.p1_rw[0] != 'u'){
+		
+		pkt_to_mp_bus.p1_address = pkt_from_mp_bus.p1_address;
+        	strcpy(pkt_to_mp_bus.p1_rw,pkt_from_mp_bus.p1_rw);
+		strcpy(pkt_to_mp_bus.p1_id,pkt_from_mp_bus.p1_id);
+
+		send_DATAPKT(to_mp_bus,pkt_to_mp_bus);
+	}
+}

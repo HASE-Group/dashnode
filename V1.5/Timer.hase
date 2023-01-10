@@ -1,0 +1,37 @@
+//
+// Project:	DASH node
+// Entity:	Cycle Counter
+// File:	Counter.hase
+// Date:	5 Feb 2003
+
+// Written by Roland Ibbett
+
+
+$class_decls
+
+// variables 
+
+  int max_cycles;
+  bool stop;
+//entity references
+
+  mips * myMIPS;
+
+$body
+
+  myMIPS = (mips*)sim.get_entity(sim.get_entity_id("MIPS"));
+  max_cycles = 1 << Max_cycles;
+  Cycles = 0;
+  stop = false;
+ 
+dump_state();
+
+while (!myMIPS->stop && (Cycles < max_cycles))
+{
+ sim_hold(1);
+ Cycles ++;
+ dump_state();
+}
+
+stop = true;
+

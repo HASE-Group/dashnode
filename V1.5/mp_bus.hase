@@ -1,0 +1,53 @@
+//
+// Project:	DASH node
+// Entity:	MP BUS
+// File:	mp_bus.hase
+// Date:	23 Oct 2001
+
+// Originally Written by Lawrence Williams
+// Modified by Roland Ibbett
+
+$class_decls
+
+//entity references
+
+// Variable Declarations
+
+p1_struct pkt_from_mips1;      // Packet inbound from mips1.
+p1_struct pkt_to_mips1;        // Packet outbound to mips1
+p1_struct pkt_to_c_memory;     // Packet bound for mp_bus.      
+p1_struct pkt_from_c_memory;   // Packet inbound from c_memory.
+
+$body 
+
+while(1)
+{	
+	sim_get_next(ev);
+
+	/* Classify Event */
+
+        if  (ev.scheduled_by() == from_mips1.get_dest()){
+		SIM_CAST(p1_struct,pkt_from_mips1,ev);
+		sim_hold(1.0);
+		
+		pkt_to_c_memory.p1_address = pkt_from_mips1.p1_address;
+        	strcpy(pkt_to_c_memory.p1_rw,pkt_from_mips1.p1_rw);
+		strcpy(pkt_to_c_memory.p1_id,pkt_from_mips1.p1_id);
+
+	send_DATAPKT(to_c_memory,pkt_to_c_memory);
+
+	}	
+
+        if  (ev.scheduled_by() == from_c_memory.get_dest()){
+		SIM_CAST(p1_struct,pkt_from_c_memory,ev);
+		sim_hold(1.0);
+		
+		pkt_to_mips1.p1_address = pkt_from_c_memory.p1_address;
+        	strcpy(pkt_to_mips1.p1_rw,pkt_from_c_memory.p1_rw);
+		strcpy(pkt_to_mips1.p1_id,pkt_from_c_memory.p1_id);
+
+	send_DATAPKT(to_mips1,pkt_to_mips1);
+
+	}
+
+}

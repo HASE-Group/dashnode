@@ -1,0 +1,51 @@
+crest : position (500,20)
+title : position (200,225)
+parameters : position (30,145)
+
+TIMER : position (0,0)
+TIMER : STATES NORMAL:timer
+TIMER : param Max_cycles mode NAME_EXP position (40,5)
+TIMER : PARAM Cycles mode VALUE position (110,23)
+
+MIPS : position (34,59)
+MIPS : STATES M_STOPPED:mips_stopped M_RUNNING:mips_running M_WAITING:mips_waiting
+MIPS : port to_p_cache side RIGHT position 21
+MIPS : port from_p_cache side RIGHT position 39 ICON portl
+MIPS : PARAM TC mode VALUE POSITION (26,34)
+MIPS : PARAM MIPS_delay mode NAME_VALUE position (30,170)
+
+P_CACHE : position (128,65)
+P_CACHE : STATES P_HIT:p_cache  P_MISS:p_cache P_IDLE:p_cache 
+P_CACHE : port from_mips side LEFT position 15 ICON portr
+P_CACHE : port to_mips side LEFT position 33
+P_CACHE : port to_s_cache side RIGHT position 15
+P_CACHE : port from_s_cache side RIGHT position 33 ICON portl
+P_CACHE : PARAM status0 mode VALUE POSITION (14,12)
+P_CACHE : PARAM status1 mode VALUE POSITION (24,12)
+P_CACHE : PARAM P_delay mode NAME_VALUE position (130,170)
+P_CACHE : PARAM P_size  mode NAME_EXP position (130,195)
+
+S_CACHE : position (213,65)
+S_CACHE : STATES S_HIT:s_cache  S_MISS:s_cache  S_IDLE:s_cache
+S_CACHE : port from_p_cache side LEFT position 15 ICON portr
+S_CACHE : port to_p_cache side LEFT position 33
+S_CACHE : port to_mp_bus side RIGHT position 13
+S_CACHE : port from_mp_bus side RIGHT position 32 ICON portl
+S_CACHE : PARAM status0 mode VALUE POSITION (14,12)
+S_CACHE : PARAM status1 mode VALUE POSITION (24,12)
+S_CACHE : PARAM S_delay mode NAME_VALUE position (220,170)
+S_CACHE : PARAM S_size  mode NAME_EXP position (220,195)
+
+MP_BUS : position (320,42)
+MP_BUS : port from_mips1 side LEFT position 36 ICON portr
+MP_BUS : port to_mips1 side LEFT position 55
+MP_BUS : port to_c_memory side RIGHT position 36
+MP_BUS : port from_c_memory side RIGHT position 55 ICON portl
+
+MEMORY : position (400,55)
+MEMORY : port from_mp_bus side LEFT position 23 ICON portr
+MEMORY : port to_mp_bus side LEFT position 42
+MEMORY : PARAM action mode VALUE POSITION (21,17)
+MEMORY : PARAM M_delay mode NAME_VALUE position (310,170)
+MEMORY : PARAM M_size  mode NAME_EXP position (310,195)
+
